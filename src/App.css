@@ -333,3 +333,21 @@ input[type="number"]:disabled { opacity: 0.5; }
 @media (max-width: 420px) {
   .dashboard { grid-template-columns: 1fr; }
 }
+
+/* ── TX Link ──────────────────────────────────────────── */
+.tx-link {
+  display: inline-block;
+  margin-left: 12px;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  opacity: 0.8;
+}
+.tx-link:hover { opacity: 1; }
+
+/* ── Hero CTA hint ────────────────────────────────────── */
+.hero-cta-hint {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
