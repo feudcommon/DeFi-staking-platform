@@ -1,12 +1,38 @@
 {
-  "name": "hardhat-example",
+  "name": "staking-frontend",
   "version": "1.0.0",
-  "description": "",
+  "private": true,
+  "dependencies": {
+    "@craco/craco": "^7.1.0",
+    "@rainbow-me/rainbowkit": "^2.0.8",
+    "@tanstack/react-query": "^5.28.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vercel/speed-insights": "^2.0.0",
+    "ethers": "^6.7.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "viem": "^2.17.0",
+    "wagmi": "^2.9.0"
+  },
   "scripts": {
-    "test": "hardhat test"
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version"
+    ]
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.0"
+    "typescript": "^6.0.3"
   }
 }
