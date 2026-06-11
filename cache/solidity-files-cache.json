@@ -37,8 +37,8 @@
       ]
     },
     "C:\\Holidays\\defi-staking-app\\hardhat-example\\contracts\\StakingContract .sol": {
-      "lastModificationDate": 1781157994961,
-      "contentHash": "2d90b6e3a998b4f4d2caa12fee14bb17",
+      "lastModificationDate": 1781164344951,
+      "contentHash": "ea669005ab600ab29450733560a767b7",
       "sourceName": "contracts/StakingContract .sol",
       "solcConfig": {
         "version": "0.8.19",
