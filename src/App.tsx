@@ -8,7 +8,7 @@ import "./App.css";
 
 // ─── Constants ────────────────────────────────────────────
 const NETWORK     = { chainId: 34, name: "SCAI Mainnet" };
-const EXPLORER    = "https://explorer.scai.network";
+const EXPLORER = "https://explorer.securechain.ai";
 const READ_RPC    = "https://mainnet-rpc.scai.network";
 
 // ─── Types ────────────────────────────────────────────────
