@@ -4,6 +4,8 @@ A decentralized staking platform built on SCAI Mainnet allowing users to stake E
 
 ## Live Demo
 https://vercel.com/stakingcontract/de-fi-staking-platform
+## Recording
+https://www.loom.com/share/ed428bbdbfb2499ab746455152deea27
 
 ## Tech Stack
 - Solidity
