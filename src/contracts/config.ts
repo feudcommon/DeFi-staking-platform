@@ -14,6 +14,6 @@ export const STAKING_ABI = [
   "function getDashboardData(address user) view returns (uint256 stakedAmount, uint256 availableReward, uint256 aprBPS)",
   "function totalStaked() view returns (uint256)",
   "function stake(uint256 amount)",
-  "function withdraw(uint256 amount)",
+  "function Withdraw(uint256 amount)",
   "function claimRewards()",
 ];
