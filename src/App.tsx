@@ -312,9 +312,12 @@ export default function App() {
       )}
 
       <footer className="footer">
-        <span>STK Staking</span>
-        <a href={`${EXPLORER}/address/${ADDRESSES.staking}`} target="_blank" rel="noreferrer">Contract ↗</a>
-      </footer>
-    </div>
+  <span>STK Staking</span>
+  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+    <a href={`${EXPLORER}/address/${ADDRESSES.staking}`} target="_blank" rel="noreferrer">Contract ↗</a>
+    <span style={{ color: "var(--border)", margin: "0 4px" }}>|</span>
+    <span>Audited by <a href="https://etherauthority.io" target="_blank" rel="noreferrer" style={{ color: "var(--accent)", fontWeight: 600 }}>EtherAuthority</a></span>
+  </div>
+</footer>
   );
 }
