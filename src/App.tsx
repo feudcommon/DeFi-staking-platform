@@ -4,6 +4,15 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useWalletClient, useAccount, useChainId } from "wagmi";
 import { ADDRESSES, ERC20_ABI, STAKING_ABI } from "./contracts/config";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { lazy, Suspense } from "react";
+const ConnectButton = lazy(() =>
+  import("@rainbow-me/rainbowkit").then(m => ({ default: m.ConnectButton }))
+);
+
+// Then wrap usage:
+<Suspense fallback={<button className="btn-connect">Connect</button>}>
+  <ConnectButton />
+</Suspense>
 import "./App.css";
 
 // ─── Constants ────────────────────────────────────────────
