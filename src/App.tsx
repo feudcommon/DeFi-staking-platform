@@ -147,7 +147,7 @@ export default function App() {
       const amount  = ethers.parseEther(withdrawInput);
 
       setStatus("Withdrawing...");
-      const tx = await staking.withdraw(amount);
+      const tx = await staking.Withdraw(amount);
       await tx.wait();
 
       setTxHash(tx.hash);
