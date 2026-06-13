@@ -10,7 +10,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": true, "module": "esnext",
     "jsx": "react-jsx"
   },
   "include": ["src"]
