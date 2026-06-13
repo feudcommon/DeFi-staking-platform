@@ -4,21 +4,13 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useWalletClient, useAccount, useChainId } from "wagmi";
 import { ADDRESSES, ERC20_ABI, STAKING_ABI } from "./contracts/config";
 import { SpeedInsights } from "@vercel/speed-insights/react";
-import { lazy, Suspense } from "react";
-const ConnectButton = lazy(() =>
-  import("@rainbow-me/rainbowkit").then(m => ({ default: m.ConnectButton }))
-);
-
-// Then wrap usage:
-<Suspense fallback={<button className="btn-connect">Connect</button>}>
-  <ConnectButton />
-</Suspense>
 import "./App.css";
 
 // ─── Constants ────────────────────────────────────────────
 const NETWORK  = { chainId: 34, name: "SCAI Mainnet" };
 const EXPLORER = "https://explorer.securechain.ai";
 const READ_RPC = "https://mainnet-rpc.scai.network";
+const DAPP_URL = "https://de-fi-staking-platform-vert.vercel.app";
 
 // ─── Types ────────────────────────────────────────────────
 interface DashboardData {
@@ -28,11 +20,15 @@ interface DashboardData {
   apyPercent:      string;
   walletBalance:   string;
   totalStaked:     string;
+  stakedRaw:       bigint;
+  balanceRaw:      bigint;
+  rewardRaw:       bigint;
 }
 
 const EMPTY_DASHBOARD: DashboardData = {
   stakedAmount: "0.00", availableReward: "0.00", aprPercent: "0.00",
   apyPercent:   "0.00", walletBalance:   "0.00", totalStaked: "0.00",
+  stakedRaw: 0n, balanceRaw: 0n, rewardRaw: 0n,
 };
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -60,7 +56,7 @@ export default function App() {
   );
   const readProvider = useMemo(() => new ethers.JsonRpcProvider(READ_RPC), []);
 
-  const wrongNetwork = isConnected && chainId !== NETWORK.chainId;
+  const wrongNetwork = isConnected && !!chainId && chainId !== NETWORK.chainId;
 
   const [dashboard,     setDashboard]     = useState<DashboardData>(EMPTY_DASHBOARD);
   const [stakeInput,    setStakeInput]    = useState("");
@@ -90,6 +86,9 @@ export default function App() {
         apyPercent:      aprToApy(aprPercent).toFixed(2),
         walletBalance:   fmt(walletBalance),
         totalStaked:     fmt(totalStaked, 2),
+        stakedRaw:       BigInt(stakedAmount),
+        balanceRaw:      BigInt(walletBalance),
+        rewardRaw:       BigInt(availableReward),
       });
     } catch (e) {
       console.error("Dashboard load error:", e);
@@ -98,8 +97,8 @@ export default function App() {
 
   useEffect(() => {
     if (provider && account && !wrongNetwork) {
-      loadDashboard(provider, account);
-      const id = setInterval(() => loadDashboard(provider, account), 15000);
+      void loadDashboard(provider, account);
+      const id = setInterval(() => void loadDashboard(provider, account), 15000);
       return () => clearInterval(id);
     } else if (!isConnected) {
       const loadGlobal = async () => {
@@ -111,7 +110,7 @@ export default function App() {
           console.error("Global stats error:", e);
         }
       };
-      loadGlobal();
+      void loadGlobal();
     }
   }, [provider, account, wrongNetwork, isConnected, loadDashboard, readProvider]);
 
@@ -124,7 +123,7 @@ export default function App() {
       const staking = new ethers.Contract(ADDRESSES.staking, STAKING_ABI, signer);
       const amount  = ethers.parseEther(stakeInput);
 
-      setStatus("Approving...");
+      setStatus("Approving token spend...");
       await (await token.approve(ADDRESSES.staking, amount)).wait();
 
       setStatus("Staking...");
@@ -134,7 +133,7 @@ export default function App() {
       setTxHash(tx.hash);
       setStatus("Staked successfully.");
       setStakeInput("");
-      loadDashboard(provider, account);
+      void loadDashboard(provider, account);
     } catch (e: any) {
       setStatus(parseError(e));
     }
@@ -156,7 +155,7 @@ export default function App() {
       setTxHash(tx.hash);
       setStatus("Withdrawn successfully.");
       setWithdrawInput("");
-      loadDashboard(provider, account);
+      void loadDashboard(provider, account);
     } catch (e: any) {
       setStatus(parseError(e));
     }
@@ -176,18 +175,19 @@ export default function App() {
 
       setTxHash(tx.hash);
       setStatus("Rewards claimed.");
-      loadDashboard(provider, account);
+      void loadDashboard(provider, account);
     } catch (e: any) {
       setStatus(parseError(e));
     }
     setLoading(false);
   }
 
+  const hasRewards = dashboard.rewardRaw > 0n;
+
   return (
     <div className="app">
       <SpeedInsights />
 
-      {/* Header */}
       <header className="header">
         <div className="header-left">
           <span className="logo">⬡ STK</span>
@@ -198,21 +198,18 @@ export default function App() {
         </div>
       </header>
 
-      {/* Wrong network */}
       {wrongNetwork && (
         <div className="status-msg status-error">
           Wrong network. Switch to {NETWORK.name} (chain ID {NETWORK.chainId}) in your wallet.
         </div>
       )}
 
-      {/* Hero */}
       <section className="hero">
         <h1>Stake STK.<br />Earn rewards.</h1>
         <p className="hero-sub">Deposit tokens, accumulate yield, withdraw anytime.</p>
         {!isConnected && <p className="hero-cta-hint">Connect your wallet to get started.</p>}
       </section>
 
-      {/* Dashboard */}
       <section className="dashboard">
         <div className="stat-card">
           <span className="stat-label">Staked</span>
@@ -240,7 +237,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Actions */}
       {isConnected && !wrongNetwork && (
         <>
           <section className="actions">
@@ -249,9 +245,12 @@ export default function App() {
               <div className="input-row">
                 <input type="number" placeholder="Amount" value={stakeInput}
                   onChange={e => setStakeInput(e.target.value)} disabled={loading} />
-                <button className="btn-max" onClick={() => setStakeInput(dashboard.walletBalance)} disabled={loading}>MAX</button>
+                <button className="btn-max"
+                  onClick={() => setStakeInput(ethers.formatEther(dashboard.balanceRaw))}
+                  disabled={loading}>MAX</button>
               </div>
-              <button className="btn-action" onClick={handleStake} disabled={loading || !stakeInput}>
+              <button className="btn-action" onClick={handleStake}
+                disabled={loading || !stakeInput || parseFloat(stakeInput) <= 0}>
                 {loading ? "Pending..." : "Stake STK"}
               </button>
             </div>
@@ -261,9 +260,12 @@ export default function App() {
               <div className="input-row">
                 <input type="number" placeholder="Amount" value={withdrawInput}
                   onChange={e => setWithdrawInput(e.target.value)} disabled={loading} />
-                <button className="btn-max" onClick={() => setWithdrawInput(dashboard.stakedAmount)} disabled={loading}>MAX</button>
+                <button className="btn-max"
+                  onClick={() => setWithdrawInput(ethers.formatEther(dashboard.stakedRaw))}
+                  disabled={loading}>MAX</button>
               </div>
-              <button className="btn-action" onClick={handleWithdraw} disabled={loading || !withdrawInput}>
+              <button className="btn-action" onClick={handleWithdraw}
+                disabled={loading || !withdrawInput || parseFloat(withdrawInput) <= 0}>
                 {loading ? "Pending..." : "Withdraw STK"}
               </button>
             </div>
@@ -273,7 +275,7 @@ export default function App() {
               <div className="reward-amount">{dashboard.availableReward} <span className="stat-unit">STK</span></div>
               <p className="reward-sub">Accumulated and ready to claim</p>
               <button className="btn-action btn-claim" onClick={handleClaim}
-                disabled={loading || dashboard.availableReward === "0.0000"}>
+                disabled={loading || !hasRewards}>
                 {loading ? "Pending..." : "Claim Rewards"}
               </button>
             </div>
@@ -296,6 +298,8 @@ export default function App() {
         <span>STK Staking</span>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <a href={`${EXPLORER}/address/${ADDRESSES.staking}`} target="_blank" rel="noreferrer">Contract ↗</a>
+          <span style={{ color: "var(--border)", margin: "0 4px" }}>|</span>
+          <a href={DAPP_URL} target="_blank" rel="noreferrer">Live DApp ↗</a>
           <span style={{ color: "var(--border)", margin: "0 4px" }}>|</span>
           <span>Audited by <a href="https://etherauthority.io" target="_blank" rel="noreferrer" style={{ color: "var(--accent)", fontWeight: 600 }}>EtherAuthority</a></span>
         </div>
