@@ -1,22 +1,16 @@
-import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ethers } from "ethers";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useWalletClient, useAccount, useChainId } from "wagmi";
 import { ADDRESSES, ERC20_ABI, STAKING_ABI } from "./contracts/config";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import "./App.css";
 
-// ─── Lazy load heavy RainbowKit component ─────────────────
-const ConnectButton = lazy(() =>
-  import("@rainbow-me/rainbowkit").then(m => ({ default: m.ConnectButton }))
-);
-
-// ─── Constants ────────────────────────────────────────────
 const NETWORK  = { chainId: 34, name: "SCAI Mainnet" };
 const EXPLORER = "https://explorer.securechain.ai";
 const READ_RPC = "https://mainnet-rpc.scai.network";
 const DAPP_URL = "https://de-fi-staking-platform-vert.vercel.app";
 
-// ─── Types ────────────────────────────────────────────────
 interface DashboardData {
   stakedAmount:    string;
   availableReward: string;
@@ -35,7 +29,6 @@ const EMPTY_DASHBOARD: DashboardData = {
   stakedRaw: 0n, balanceRaw: 0n, rewardRaw: 0n,
 };
 
-// ─── Helpers ──────────────────────────────────────────────
 function fmt(wei: bigint, decimals = 4): string {
   return parseFloat(ethers.formatEther(wei)).toFixed(decimals);
 }
@@ -48,7 +41,6 @@ function parseError(e: any): string {
   return e?.revert?.args?.[0] || e?.reason || e?.shortMessage || e?.message || "Transaction failed.";
 }
 
-// ─── Skeleton loader for stat cards ───────────────────────
 function StatSkeleton() {
   return (
     <div className="stat-card" style={{ opacity: 0.4 }}>
@@ -58,7 +50,6 @@ function StatSkeleton() {
   );
 }
 
-// ─── App ──────────────────────────────────────────────────
 export default function App() {
   const { address: account, isConnected } = useAccount();
   const { data: walletClient }            = useWalletClient();
@@ -210,16 +201,13 @@ export default function App() {
     <div className="app">
       <SpeedInsights />
 
-      {/* Header */}
       <header className="header">
         <div className="header-left">
           <span className="logo">⬡ STK</span>
           <span className="network-badge">{NETWORK.name}</span>
         </div>
         <div className="header-right">
-          <Suspense fallback={<button className="btn-connect">Connect</button>}>
-            <ConnectButton />
-          </Suspense>
+          <ConnectButton />
         </div>
       </header>
 
@@ -229,14 +217,12 @@ export default function App() {
         </div>
       )}
 
-      {/* Hero — renders immediately, no data needed */}
       <section className="hero">
         <h1>Stake STK.<br />Earn rewards.</h1>
         <p className="hero-sub">Deposit tokens, accumulate yield, withdraw anytime.</p>
         {!isConnected && <p className="hero-cta-hint">Connect your wallet to get started.</p>}
       </section>
 
-      {/* Dashboard — show skeletons until data arrives */}
       <section className="dashboard">
         {dataReady ? (
           <>
@@ -273,7 +259,6 @@ export default function App() {
         )}
       </section>
 
-      {/* Actions */}
       {isConnected && !wrongNetwork && (
         <>
           <section className="actions">
