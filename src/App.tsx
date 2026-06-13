@@ -1,10 +1,14 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { ethers } from "ethers";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useWalletClient, useAccount, useChainId } from "wagmi";
 import { ADDRESSES, ERC20_ABI, STAKING_ABI } from "./contracts/config";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import "./App.css";
+
+// ─── Lazy load heavy RainbowKit component ─────────────────
+const ConnectButton = lazy(() =>
+  import("@rainbow-me/rainbowkit").then(m => ({ default: m.ConnectButton }))
+);
 
 // ─── Constants ────────────────────────────────────────────
 const NETWORK  = { chainId: 34, name: "SCAI Mainnet" };
@@ -44,6 +48,16 @@ function parseError(e: any): string {
   return e?.revert?.args?.[0] || e?.reason || e?.shortMessage || e?.message || "Transaction failed.";
 }
 
+// ─── Skeleton loader for stat cards ───────────────────────
+function StatSkeleton() {
+  return (
+    <div className="stat-card" style={{ opacity: 0.4 }}>
+      <span className="stat-label">loading</span>
+      <span className="stat-value" style={{ background: "var(--border)", borderRadius: 6, color: "transparent" }}>0.0000</span>
+    </div>
+  );
+}
+
 // ─── App ──────────────────────────────────────────────────
 export default function App() {
   const { address: account, isConnected } = useAccount();
@@ -64,9 +78,15 @@ export default function App() {
   const [status,        setStatus]        = useState("");
   const [txHash,        setTxHash]        = useState("");
   const [loading,       setLoading]       = useState(false);
+  const [dataReady,     setDataReady]     = useState(false);
 
   useEffect(() => {
-    if (!isConnected) { setDashboard(EMPTY_DASHBOARD); setStatus(""); setTxHash(""); }
+    if (!isConnected) {
+      setDashboard(EMPTY_DASHBOARD);
+      setStatus("");
+      setTxHash("");
+      setDataReady(false);
+    }
   }, [isConnected]);
 
   const loadDashboard = useCallback(async (p: ethers.BrowserProvider | ethers.JsonRpcProvider, addr: string) => {
@@ -90,6 +110,7 @@ export default function App() {
         balanceRaw:      BigInt(walletBalance),
         rewardRaw:       BigInt(availableReward),
       });
+      setDataReady(true);
     } catch (e) {
       console.error("Dashboard load error:", e);
     }
@@ -103,9 +124,10 @@ export default function App() {
     } else if (!isConnected) {
       const loadGlobal = async () => {
         try {
-          const staking = new ethers.Contract(ADDRESSES.staking, STAKING_ABI, readProvider);
+          const staking     = new ethers.Contract(ADDRESSES.staking, STAKING_ABI, readProvider);
           const totalStaked = await staking.totalStaked();
           setDashboard(prev => ({ ...prev, totalStaked: fmt(totalStaked, 2) }));
+          setDataReady(true);
         } catch (e) {
           console.error("Global stats error:", e);
         }
@@ -188,13 +210,16 @@ export default function App() {
     <div className="app">
       <SpeedInsights />
 
+      {/* Header */}
       <header className="header">
         <div className="header-left">
           <span className="logo">⬡ STK</span>
           <span className="network-badge">{NETWORK.name}</span>
         </div>
         <div className="header-right">
-          <ConnectButton />
+          <Suspense fallback={<button className="btn-connect">Connect</button>}>
+            <ConnectButton />
+          </Suspense>
         </div>
       </header>
 
@@ -204,39 +229,51 @@ export default function App() {
         </div>
       )}
 
+      {/* Hero — renders immediately, no data needed */}
       <section className="hero">
         <h1>Stake STK.<br />Earn rewards.</h1>
         <p className="hero-sub">Deposit tokens, accumulate yield, withdraw anytime.</p>
         {!isConnected && <p className="hero-cta-hint">Connect your wallet to get started.</p>}
       </section>
 
+      {/* Dashboard — show skeletons until data arrives */}
       <section className="dashboard">
-        <div className="stat-card">
-          <span className="stat-label">Staked</span>
-          <span className="stat-value">{dashboard.stakedAmount} <span className="stat-unit">STK</span></span>
-        </div>
-        <div className="stat-card highlight">
-          <span className="stat-label">Rewards</span>
-          <span className="stat-value">{dashboard.availableReward} <span className="stat-unit">STK</span></span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">APR</span>
-          <span className="stat-value">{dashboard.aprPercent}<span className="stat-unit">%</span></span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">APY</span>
-          <span className="stat-value">{dashboard.apyPercent}<span className="stat-unit">%</span></span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Wallet Balance</span>
-          <span className="stat-value">{dashboard.walletBalance} <span className="stat-unit">STK</span></span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Total Staked</span>
-          <span className="stat-value">{dashboard.totalStaked} <span className="stat-unit">STK</span></span>
-        </div>
+        {dataReady ? (
+          <>
+            <div className="stat-card">
+              <span className="stat-label">Staked</span>
+              <span className="stat-value">{dashboard.stakedAmount} <span className="stat-unit">STK</span></span>
+            </div>
+            <div className="stat-card highlight">
+              <span className="stat-label">Rewards</span>
+              <span className="stat-value">{dashboard.availableReward} <span className="stat-unit">STK</span></span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">APR</span>
+              <span className="stat-value">{dashboard.aprPercent}<span className="stat-unit">%</span></span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">APY</span>
+              <span className="stat-value">{dashboard.apyPercent}<span className="stat-unit">%</span></span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Wallet Balance</span>
+              <span className="stat-value">{dashboard.walletBalance} <span className="stat-unit">STK</span></span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Total Staked</span>
+              <span className="stat-value">{dashboard.totalStaked} <span className="stat-unit">STK</span></span>
+            </div>
+          </>
+        ) : (
+          <>
+            <StatSkeleton /><StatSkeleton /><StatSkeleton />
+            <StatSkeleton /><StatSkeleton /><StatSkeleton />
+          </>
+        )}
       </section>
 
+      {/* Actions */}
       {isConnected && !wrongNetwork && (
         <>
           <section className="actions">

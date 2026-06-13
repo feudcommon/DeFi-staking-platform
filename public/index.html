@@ -4,13 +4,27 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>STK Staking</title>
+
+    <!-- Preconnect to external origins for faster resource loading -->
+    <link rel="preconnect" href="https://mainnet-rpc.scai.network" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'"
-  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
-<noscript>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
-</noscript>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- DNS prefetch for wallet services -->
+    <link rel="dns-prefetch" href="https://verify.walletconnect.com" />
+    <link rel="dns-prefetch" href="https://explorer-api.walletconnect.com" />
+
+    <!-- Fonts: preload then swap to avoid render blocking -->
+    <link rel="preload" as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <noscript>
+      <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    </noscript>
+
+    <meta name="description" content="Stake STK tokens and earn rewards on SCAI Mainnet." />
+    <meta name="theme-color" content="#0a0a0f" />
   </head>
   <body>
     <div id="root"></div>
